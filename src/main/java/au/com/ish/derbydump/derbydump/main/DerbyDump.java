@@ -47,7 +47,7 @@ public class DerbyDump {
         LOGGER.debug("\toutput file path =" + config.getOutputFilePath());
         LOGGER.debug("\ttruncate tables =" + config.getTruncateTables());
 
-        /*OutputThread output = new OutputThread();
+        OutputThread output = new OutputThread();
         Thread writer = new Thread(output, "File_Writer");
         writer.start();
 
@@ -58,7 +58,7 @@ public class DerbyDump {
             writer.join();
 
         } catch (InterruptedException ignored) {
-        }*/
+        }
 
         PostgresWriter pg = new PostgresWriter();
 

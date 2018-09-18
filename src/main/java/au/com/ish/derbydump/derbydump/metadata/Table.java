@@ -81,7 +81,7 @@ public class Table {
 		}
 
 		output.deleteCharAt(output.length()-1); //remove the last comma
-		output.append(") VALUES ");
+		output.append(") OVERRIDING SYSTEM VALUE VALUES ");
 
 		return output.toString();
 	}
