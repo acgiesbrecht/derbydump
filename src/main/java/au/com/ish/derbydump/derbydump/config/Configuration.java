@@ -67,16 +67,6 @@ public class Configuration {
 		return stringBuilder.toString();
 	}
 
-	public String getPgUrl() {
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("jdbc:postgresql:");
-		stringBuilder.append(getPgDbPath());
-		stringBuilder.append("user=").append(getUserName()).append(";");
-		stringBuilder.append("password=").append(getPassword()).append(";");
-
-		return stringBuilder.toString();
-	}
-
 	public void setTableRewriteProperty(String key, String value) {
 		tableRewriteProp.setProperty(key.toLowerCase(), value);
 	}

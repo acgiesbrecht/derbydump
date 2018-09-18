@@ -73,7 +73,7 @@ public class Table {
 	public String getInsertSQL() {
 		StringBuilder output = new StringBuilder();
 
-		output.append("INSERT INTO ").append(getTableName()).append(" (");
+		output.append("INSERT INTO MG.").append(getTableName()).append(" (");
 
 		for (Column c : getColumns()) {
 			output.append(c.getColumnName());
@@ -81,7 +81,8 @@ public class Table {
 		}
 
 		output.deleteCharAt(output.length()-1); //remove the last comma
-		output.append(") OVERRIDING SYSTEM VALUE VALUES ");
+		//output.append(") OVERRIDING SYSTEM VALUE VALUES ");
+		output.append(") VALUES ");
 
 		return output.toString();
 	}

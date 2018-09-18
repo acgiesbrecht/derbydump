@@ -35,118 +35,122 @@ import java.util.List;
  */
 public class DatabaseReader {
 
-	private final static int MAX_ALLOWED_ROWS = 100;
-	private static final Logger LOGGER = Logger.getLogger(DatabaseReader.class);
-	private final OutputThread output;
+    private final static int MAX_ALLOWED_ROWS = 100;
+    private static final Logger LOGGER = Logger.getLogger(DatabaseReader.class);
+    private final OutputThread output;
 
-	private Configuration config;
+    private Configuration config;
 
-	public DatabaseReader(OutputThread output) {
-		this.output = output;
-		config = Configuration.getConfiguration();
+    public DatabaseReader(OutputThread output) {
+        this.output = output;
+        config = Configuration.getConfiguration();
 
-		LOGGER.debug("Database reader initializing...");
-		readMetaData(config.getSchemaName());
-	}
+        LOGGER.debug("Database reader initializing...");
+        readMetaData(config.getSchemaName());
+    }
 
-	void readMetaData(String schema) {
-		// getting the connection
-		DBConnectionManager db;
-		try {
-			db = new DBConnectionManager(config.getDerbyUrl());
-		} catch (Exception e) {
-			LOGGER.error("Could not establish Database connection.", e);
-			return;
-		}
-		// creating a skeleton of tables and columns present in the database
-		MetadataReader metadata = new MetadataReader();
-		LOGGER.debug("Resolving database structure...");
-		Database database = metadata.readDatabase(db.getConnection());
-		getInternalData(database.getTables(), db.getConnection(), schema);
+    void readMetaData(String schema) {
+        // getting the connection
+        DBConnectionManager db;
+        try {
+            db = new DBConnectionManager(config.getDerbyUrl());
+        } catch (Exception e) {
+            LOGGER.error("Could not establish Database connection.", e);
+            return;
+        }
+        // creating a skeleton of tables and columns present in the database
+        MetadataReader metadata = new MetadataReader();
+        LOGGER.debug("Resolving database structure...");
+        Database database = metadata.readDatabase(db.getConnection());
+        getInternalData(database.getTables(), db.getConnection(), schema);
 
-		try {
-			db.getConnection().close();
-		} catch (SQLException e) {
-			LOGGER.error("Could not close database connection :" + e.getErrorCode() + " - " + e.getMessage());
-		}
+        try {
+            db.getConnection().close();
+        } catch (SQLException e) {
+            LOGGER.error("Could not close database connection :" + e.getErrorCode() + " - " + e.getMessage());
+        }
 
-	}
+    }
 
-	/**
-	 * Read data from each {@link Table} and add it to
-	 * the output.
-	 * 
-	 * @param tables A list of tables to read from
-	 * @param connection The database connection used to fetch the data
-	 * @param schema The name of the schema we are using
-	 */
-	private void getInternalData(List<Table> tables, Connection connection, String schema) {
-		LOGGER.debug("Fetching database data...");
+    /**
+     * Read data from each {@link Table} and add it to
+     * the output.
+     *
+     * @param tables     A list of tables to read from
+     * @param connection The database connection used to fetch the data
+     * @param schema     The name of the schema we are using
+     */
+    private void getInternalData(List<Table> tables, Connection connection, String schema) {
+        LOGGER.debug("Fetching database data...");
 
-		//output.add("SET FOREIGN_KEY_CHECKS = 0;\n");
+        //output.add("SET FOREIGN_KEY_CHECKS = 0;\n");
+        //output.add("START TRANSACTION;\n");
 
-		for (Table table : tables) {
-			if (!table.isExcluded()) {
-				List<Column> columns = table.getColumns();
-				LOGGER.info("Table " + table.getTableName() + "...\n");
+        for (Table table : tables) {
+            if (!table.isExcluded()) {
+                List<Column> columns = table.getColumns();
+                LOGGER.info("Table " + table.getTableName() + "...\n");
 
-				try {
-					Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-					ResultSet dataRows = statement.executeQuery(table.getSelectQuery(schema));
-					int rowCount = 0;
+                try {
+                    Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                    ResultSet dataRows = statement.executeQuery(table.getSelectQuery(schema));
+                    int rowCount = 0;
 
-					if (dataRows.first()) { // check that we have at least one row
-						dataRows.beforeFirst();
+                    if (dataRows.first()) { // check that we have at least one row
+                        dataRows.beforeFirst();
 
-						//output.add("LOCK TABLES `" + table.getTableName() + "` WRITE;\n");
-						if (config.getTruncateTables()) {
-							output.add("TRUNCATE TABLE " + table.getTableName() + ";\n");
-						}
-						output.add(table.getInsertSQL());
-						output.add("\n");
+                        output.add("ALTER TABLE MG." + table.getTableName() + " DISABLE TRIGGER ALL;\n");
+                        //output.add("LOCK TABLES `" + table.getTableName() + "` WRITE;\n");
+                        if (config.getTruncateTables()) {
+                            //output.add("TRUNCATE TABLE MG." + table.getTableName() + " CASCADE;\n");
+                        }
+                        output.add(table.getInsertSQL());
+                        output.add("\n");
 
-						while (dataRows.next()) {
+                        while (dataRows.next()) {
 
-							output.add("(");
-							
-							boolean firstColumn = true;
-							for (Column column : columns) {
-								if (firstColumn) {
-									firstColumn = false;
-								} else {
-									output.add(",");
-								}
-								output.add(column.toString(dataRows));
-							}
-							rowCount++;
-							output.add(")");
-							
-							
-							if (!dataRows.isLast()) {
-								if (rowCount % MAX_ALLOWED_ROWS == 0) {
-									output.add(";\n");
-									output.add(table.getInsertSQL());
-									output.add("\n");
-								} else {
-									output.add(",\n");									
-								}
-							}
-						}
+                            output.add("(");
 
-						output.add(";\n");
-						//output.add("UNLOCK TABLES;\n");
+                            boolean firstColumn = true;
+                            for (Column column : columns) {
+                                if (firstColumn) {
+                                    firstColumn = false;
+                                } else {
+                                    output.add(",");
+                                }
+                                output.add(column.toString(dataRows));
+                            }
+                            rowCount++;
+                            output.add(")");
 
-						dataRows.close();
-						statement.close();
 
-					}
+                            if (!dataRows.isLast()) {
+                                if (rowCount % MAX_ALLOWED_ROWS == 0) {
+                                    output.add(";\n");
+                                    output.add(table.getInsertSQL());
+                                    output.add("\n");
+                                } else {
+                                    output.add(",\n");
+                                }
+                            }
+                        }
 
-				} catch (SQLException e) {
-					LOGGER.error("Error: " + e.getErrorCode() + " - " + e.getMessage());
-				}
-			}
-		}
-		//output.add("SET FOREIGN_KEY_CHECKS = 1;");
-		LOGGER.debug("Reading done.");
-	}
+                        output.add(";\n");
+                        //output.add("UNLOCK TABLES;\n");
+                        output.add("ALTER TABLE MG." + table.getTableName() + " ENABLE TRIGGER ALL;\n");
+
+                        dataRows.close();
+                        statement.close();
+
+                    }
+
+                } catch (SQLException e) {
+                    LOGGER.error("Error: " + e.getErrorCode() + " - " + e.getMessage());
+                }
+            }
+        }
+        //output.add("SET FOREIGN_KEY_CHECKS = 1;");
+        //output.add("COMMIT;");
+        LOGGER.debug("Reading done.");
+    }
 }

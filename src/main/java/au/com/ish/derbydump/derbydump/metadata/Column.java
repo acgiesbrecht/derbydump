@@ -249,7 +249,8 @@ public class Column {
 		output = output.replaceAll("\\x1a", "\\\\Z");
 		
 		// Replace "'" with "\'"
-		output = output.replaceAll("\'", "\\\\'");
+        //output = output.replaceAll("\'", "\\\\'");
+        output = output.replaceAll("\'", "\'\'");
 		
 		return output;
 	}
