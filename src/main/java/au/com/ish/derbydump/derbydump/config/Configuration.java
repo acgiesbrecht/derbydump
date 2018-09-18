@@ -67,6 +67,15 @@ public class Configuration {
 		return stringBuilder.toString();
 	}
 
+	public String getPgUrl() {
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("jdbc:postgresql:");
+		stringBuilder.append(getPgDbPath());
+		stringBuilder.append("user=").append(getUserName()).append(";");
+		stringBuilder.append("password=").append(getPassword()).append(";");
+
+		return stringBuilder.toString();
+	}
 
 	public void setTableRewriteProperty(String key, String value) {
 		tableRewriteProp.setProperty(key.toLowerCase(), value);
@@ -101,6 +110,10 @@ public class Configuration {
 		return prop.getProperty("db.driverClassName");
 	}
 
+    public String getPgDriverClassName() {
+        return prop.getProperty("db.pgDriverClassName");
+    }
+
 	public void setDriverClassName(String driverClassName) {
 		prop.setProperty("db.driverClassName", driverClassName);
 	}
@@ -109,9 +122,17 @@ public class Configuration {
 		return prop.getProperty("db.derbyDbPath");
 	}
 
+    public String getPgDbPath() {
+        return prop.getProperty("db.pgDbPath");
+    }
+
 	public void setDerbyDbPath(String derbyDbPath) {
 		prop.setProperty("db.derbyDbPath", derbyDbPath);
 	}
+
+    public void setPgDbPath(String pgDbPath) {
+        prop.setProperty("db.pgDbPath", pgDbPath);
+    }
 
 	public String getSchemaName() {
 		return prop.getProperty("db.schemaName");

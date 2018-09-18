@@ -17,38 +17,50 @@
 package au.com.ish.derbydump.derbydump.main;
 
 import au.com.ish.derbydump.derbydump.config.Configuration;
+import javafx.geometry.Pos;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
 
 
 public class DerbyDump {
-	
-	private static final Logger LOGGER = Logger.getLogger(DerbyDump.class);
-	
-	public static void main(String[] args) {
 
-			Configuration config = Configuration.getConfiguration();
+    private static final Logger LOGGER = Logger.getLogger(DerbyDump.class);
 
-			LOGGER.debug("Configuration:");
-			LOGGER.debug("\tuser =" + config.getUserName());
-			LOGGER.debug("\tpassword =" + config.getPassword());
-			LOGGER.debug("\tderbyDbPath =" + config.getDerbyDbPath());
-			LOGGER.debug("\tdriverName =" + config.getDriverClassName());
-			LOGGER.debug("\tschema =" + config.getSchemaName());
-			LOGGER.debug("\tbuffer size =" + config.getBufferMaxSize());
-			LOGGER.debug("\toutput file path =" + config.getOutputFilePath());
-			LOGGER.debug("\ttruncate tables =" + config.getTruncateTables());
+    public static void main(String[] args) {
 
-			OutputThread output = new OutputThread();
-			Thread writer = new Thread(output, "File_Writer");
-			writer.start();
+        Configuration config = Configuration.getConfiguration();
 
-			new DatabaseReader(output);
-		try {
-			// Let the writer know that no more data is coming
-			writer.interrupt();
-			writer.join();
+        LOGGER.debug("Configuration:");
+        LOGGER.debug("\tuser =" + config.getUserName());
+        LOGGER.debug("\tpassword =" + config.getPassword());
+        LOGGER.debug("\tderbyDbPath =" + config.getDerbyDbPath());
+        LOGGER.debug("\tdriverName =" + config.getDriverClassName());
+        LOGGER.debug("\tschema =" + config.getSchemaName());
+        LOGGER.debug("\tbuffer size =" + config.getBufferMaxSize());
+        LOGGER.debug("\toutput file path =" + config.getOutputFilePath());
+        LOGGER.debug("\ttruncate tables =" + config.getTruncateTables());
 
-		} catch (InterruptedException ignored) {}
+        /*OutputThread output = new OutputThread();
+        Thread writer = new Thread(output, "File_Writer");
+        writer.start();
 
-	}	
+        new DatabaseReader(output);
+        try {
+            // Let the writer know that no more data is coming
+            writer.interrupt();
+            writer.join();
+
+        } catch (InterruptedException ignored) {
+        }*/
+
+        PostgresWriter pg = new PostgresWriter();
+
+    }
 }

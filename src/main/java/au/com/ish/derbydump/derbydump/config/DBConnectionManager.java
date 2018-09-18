@@ -27,7 +27,8 @@ public class DBConnectionManager {
 	private String url;
 
 	public DBConnectionManager(String url) throws ClassNotFoundException, IllegalAccessException, InstantiationException, SQLException {
-		Class.forName(Configuration.getConfiguration().getDriverClassName()).newInstance();
+		String cls = Configuration.getConfiguration().getDriverClassName();
+		Class.forName(cls).newInstance();
 		this.url = url;
 		innitialConnection = createNewConnection();
 	}
